@@ -16,8 +16,8 @@ wwwroot/dist/
 # Environment & Secrets
 .env
 *.env.local
-appsettings.Local.json
-appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.Development.json
 
 # IDE
 .vscode/

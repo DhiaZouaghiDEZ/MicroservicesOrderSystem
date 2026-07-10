@@ -4,16 +4,20 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace OrderService.Migrations
+namespace InventoryService.Migrations
 {
     /// <inheritdoc />
-    public partial class AddOutBoxPatternTables : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.EnsureSchema(
+                name: "inventory");
+
             migrationBuilder.CreateTable(
                 name: "InboxState",
+                schema: "inventory",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
@@ -36,7 +40,22 @@ namespace OrderService.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "InventoryItems",
+                schema: "inventory",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductName = table.Column<string>(type: "text", nullable: false),
+                    StockQuantity = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_InventoryItems", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "OutboxState",
+                schema: "inventory",
                 columns: table => new
                 {
                     OutboxId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -54,6 +73,7 @@ namespace OrderService.Migrations
 
             migrationBuilder.CreateTable(
                 name: "OutboxMessage",
+                schema: "inventory",
                 columns: table => new
                 {
                     SequenceNumber = table.Column<long>(type: "bigint", nullable: false)
@@ -85,49 +105,58 @@ namespace OrderService.Migrations
                     table.ForeignKey(
                         name: "FK_OutboxMessage_InboxState_InboxMessageId_InboxConsumerId",
                         columns: x => new { x.InboxMessageId, x.InboxConsumerId },
+                        principalSchema: "inventory",
                         principalTable: "InboxState",
                         principalColumns: new[] { "MessageId", "ConsumerId" });
                     table.ForeignKey(
                         name: "FK_OutboxMessage_OutboxState_OutboxId",
                         column: x => x.OutboxId,
+                        principalSchema: "inventory",
                         principalTable: "OutboxState",
                         principalColumn: "OutboxId");
                 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_InboxState_Delivered",
+                schema: "inventory",
                 table: "InboxState",
                 column: "Delivered");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutboxMessage_EnqueueTime",
+                schema: "inventory",
                 table: "OutboxMessage",
                 column: "EnqueueTime");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutboxMessage_ExpirationTime",
+                schema: "inventory",
                 table: "OutboxMessage",
                 column: "ExpirationTime");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutboxMessage_InboxMessageId_InboxConsumerId_SequenceNumber",
+                schema: "inventory",
                 table: "OutboxMessage",
                 columns: new[] { "InboxMessageId", "InboxConsumerId", "SequenceNumber" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutboxMessage_OutboxId_SequenceNumber",
+                schema: "inventory",
                 table: "OutboxMessage",
                 columns: new[] { "OutboxId", "SequenceNumber" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutboxState_BusName_Created",
+                schema: "inventory",
                 table: "OutboxState",
                 columns: new[] { "BusName", "Created" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutboxState_Created",
+                schema: "inventory",
                 table: "OutboxState",
                 column: "Created");
         }
@@ -136,13 +165,20 @@ namespace OrderService.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "OutboxMessage");
+                name: "InventoryItems",
+                schema: "inventory");
 
             migrationBuilder.DropTable(
-                name: "InboxState");
+                name: "OutboxMessage",
+                schema: "inventory");
 
             migrationBuilder.DropTable(
-                name: "OutboxState");
+                name: "InboxState",
+                schema: "inventory");
+
+            migrationBuilder.DropTable(
+                name: "OutboxState",
+                schema: "inventory");
         }
     }
 }
