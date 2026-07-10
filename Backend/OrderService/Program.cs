@@ -22,12 +22,22 @@ builder.Services.AddDbContext<OrderDbContext>(options =>
 
 builder.Services.AddMassTransit(x =>
 {
+    // Configure the Entity Framework Outbox
+    x.AddEntityFrameworkOutbox<OrderDbContext>(o =>
+    {
+        o.UsePostgres(); // Tell it we are using PostgreSQL
+        o.UseBusOutbox(); // Ensure messages sent from consumers also use the outbox
+    });
+       
     x.UsingRabbitMq((context, cfg) =>
     {
-        // MassTransit can parse the entire AMQP URL directly!
         cfg.Host(new Uri(builder.Configuration["RabbitMq:Host"]!));
+
+        // Tell RabbitMQ to use the outbox for publishing
+        cfg.UseMessageRetry(r => r.Interval(3, 5000)); // Retry 3 times if RabbitMQ is briefly unavailable
     });
 });
+
 builder.Services.AddScoped<IOrderService, OrderService.Services.OrderService>();
 var app = builder.Build();
 

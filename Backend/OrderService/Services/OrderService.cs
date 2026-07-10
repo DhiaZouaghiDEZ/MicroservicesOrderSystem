@@ -19,27 +19,39 @@ public class OrderService : IOrderService
 
     public async Task<Guid> CreateOrderAsync(CreateOrderRequest request)
     {
-        // 1. Business Logic & Database Save
-        var order = new Order
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
         {
-            Id = Guid.NewGuid(),
-            ProductName = request.ProductName,
-            Quantity = request.Quantity,
-            Status = "Pending"
-        };
+            var order = new Order
+            {
+                Id = Guid.NewGuid(),
+                ProductName = request.ProductName,
+                Quantity = request.Quantity,
+                Status = "Pending"
+            };
 
-        _context.Orders.Add(order);
-        await _context.SaveChangesAsync();
+            _context.Orders.Add(order);
 
-        // 2. Publish Event to RabbitMQ
-        await _publishEndpoint.Publish(new OrderCreatedEvent
+            await _publishEndpoint.Publish(new OrderCreatedEvent
+            {
+                OrderId = order.Id,
+                ProductName = order.ProductName,
+                Quantity = order.Quantity,
+                CreatedAt = order.CreatedAt
+            });
+
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            return order.Id;
+        }
+        catch
         {
-            OrderId = order.Id,
-            ProductName = order.ProductName,
-            Quantity = order.Quantity,
-            CreatedAt = order.CreatedAt
-        });
-
-        return order.Id;
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 }
