@@ -1,0 +1,24 @@
+# .NET
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.cache
+*.log
+.vs/
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+wwwroot/dist/
+
+# Environment & Secrets
+.env
+*.env.local
+appsettings.Local.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
