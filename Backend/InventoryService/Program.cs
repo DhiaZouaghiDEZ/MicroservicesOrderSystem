@@ -24,10 +24,10 @@ builder.Services.AddDbContext<InventoryDbContext>(options =>
 // 2. MassTransit & Consumer
 builder.Services.AddMassTransit(x =>
 {
-    // Register the consumer
+    // 1. Register the consumer
     x.AddConsumer<OrderCreatedEventConsumer>();
 
-    // Add the Outbox for the consumer (Ensures DB save and RabbitMQ ACK are atomic)
+    // 2. Configure the Outbox
     x.AddEntityFrameworkOutbox<InventoryDbContext>(o =>
     {
         o.UsePostgres();
@@ -38,6 +38,8 @@ builder.Services.AddMassTransit(x =>
     {
         cfg.Host(new Uri(builder.Configuration["RabbitMq:Host"]!));
         cfg.UseMessageRetry(r => r.Interval(3, 5000));
+
+        cfg.ConfigureEndpoints(context);
     });
 });
 
