@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MassTransit;
 using OrderService.Models.Entities;
+using OrderService.Sagas;
 
 namespace OrderService.Data;
 
@@ -13,12 +14,15 @@ public class OrderDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        //TELL EF CORE TO USE THE 'order' SCHEMA
         modelBuilder.HasDefaultSchema("order");
+    
+        modelBuilder.Entity<OrderSagaState>(builder =>
+        {
+            builder.HasKey(x => x.CorrelationId);
+            builder.Property(x => x.CurrentState).HasMaxLength(64);
+            builder.Property(x => x.ProductName).HasMaxLength(256);
+        });
 
-        // MassTransit Outbox tables will now be created as:
-        // order."OutboxState", order."OutboxMessage", etc.
         modelBuilder.AddInboxStateEntity();
         modelBuilder.AddOutboxMessageEntity();
         modelBuilder.AddOutboxStateEntity();

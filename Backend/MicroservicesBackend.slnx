@@ -1,5 +1,8 @@
 <Solution>
+  <Project Path="InventoryService.Contracts/InventoryService.Contracts.csproj" />
   <Project Path="InventoryService/InventoryService.csproj" />
   <Project Path="OrderService.Contracts/OrderService.Contracts.csproj" />
   <Project Path="OrderService/OrderService.csproj" />
+  <Project Path="PaymentService.Contracts/PaymentService.Contracts.csproj" />
+  <Project Path="PaymentService/PaymentService.csproj" />
 </Solution>

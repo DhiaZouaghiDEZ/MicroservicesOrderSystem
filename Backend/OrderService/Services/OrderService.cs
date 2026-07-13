@@ -1,4 +1,5 @@
 ﻿using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using OrderService.Contracts;
 using OrderService.Data;
 using OrderService.Models.DTOs;
@@ -17,41 +18,24 @@ public class OrderService : IOrderService
         _publishEndpoint = publishEndpoint;
     }
 
-    public async Task<Guid> CreateOrderAsync(CreateOrderRequest request)
+    public async Task<Guid> SubmitOrderAsync(CreateOrderRequest request)
     {
-
-        await using var transaction = await _context.Database.BeginTransactionAsync();
-
-        try
+        var order = new Order
         {
-            var order = new Order
-            {
-                Id = Guid.NewGuid(),
-                ProductName = request.ProductName,
-                Quantity = request.Quantity,
-                Status = "Pending"
-            };
+            Id = Guid.NewGuid(),
+            ProductName = request.ProductName,
+            Quantity = request.Quantity,
+            Amount = request.Amount,
+            Status = "Pending"
+        };
 
-            _context.Orders.Add(order);
+        _context.Orders.Add(order);
 
-            await _publishEndpoint.Publish(new OrderCreatedEvent
-            {
-                OrderId = order.Id,
-                ProductName = order.ProductName,
-                Quantity = order.Quantity,
-                CreatedAt = order.CreatedAt
-            });
+        await _publishEndpoint.Publish(new OrderSubmittedEvent(
+            order.Id, order.ProductName, order.Quantity, order.Amount));
 
-            await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
-            await transaction.CommitAsync();
-
-            return order.Id;
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+        return order.Id;
     }
 }

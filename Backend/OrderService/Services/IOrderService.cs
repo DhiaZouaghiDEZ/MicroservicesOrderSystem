@@ -4,5 +4,5 @@ namespace OrderService.Services;
 
 public interface IOrderService
 {
-    Task<Guid> CreateOrderAsync(CreateOrderRequest request);
+    Task<Guid> SubmitOrderAsync(CreateOrderRequest request);
 }

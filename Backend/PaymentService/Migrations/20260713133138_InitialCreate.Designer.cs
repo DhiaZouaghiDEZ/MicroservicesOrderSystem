@@ -2,22 +2,25 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using OrderService.Data;
+using PaymentService.Data;
 
 #nullable disable
 
-namespace OrderService.Migrations
+namespace PaymentService.Migrations
 {
-    [DbContext(typeof(OrderDbContext))]
-    partial class OrderDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(PaymentDbContext))]
+    [Migration("20260713133138_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasDefaultSchema("order")
+                .HasDefaultSchema("payment")
                 .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -67,7 +70,7 @@ namespace OrderService.Migrations
 
                     b.HasIndex("Delivered");
 
-                    b.ToTable("InboxState", "order");
+                    b.ToTable("InboxState", "payment");
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxMessage", b =>
@@ -158,7 +161,7 @@ namespace OrderService.Migrations
                     b.HasIndex("InboxMessageId", "InboxConsumerId", "SequenceNumber")
                         .IsUnique();
 
-                    b.ToTable("OutboxMessage", "order");
+                    b.ToTable("OutboxMessage", "payment");
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxState", b =>
@@ -194,10 +197,10 @@ namespace OrderService.Migrations
 
                     b.HasIndex("BusName", "Created");
 
-                    b.ToTable("OutboxState", "order");
+                    b.ToTable("OutboxState", "payment");
                 });
 
-            modelBuilder.Entity("OrderService.Models.Entities.Order", b =>
+            modelBuilder.Entity("PaymentService.Models.Entities.PaymentRecord", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -206,15 +209,11 @@ namespace OrderService.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ProcessedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -222,34 +221,7 @@ namespace OrderService.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Orders", "order");
-                });
-
-            modelBuilder.Entity("OrderService.Sagas.OrderSagaState", b =>
-                {
-                    b.Property<Guid>("CorrelationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("CurrentState")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("integer");
-
-                    b.HasKey("CorrelationId");
-
-                    b.ToTable("OrderSagaState", "order");
+                    b.ToTable("PaymentRecords", "payment");
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxMessage", b =>

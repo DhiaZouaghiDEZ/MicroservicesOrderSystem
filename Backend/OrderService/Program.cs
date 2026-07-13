@@ -1,8 +1,10 @@
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using OrderService.Data;
+using OrderService.Sagas;
 using OrderService.Services;
 using Scalar.AspNetCore;
+using OrderService.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,19 +24,31 @@ builder.Services.AddDbContext<OrderDbContext>(options =>
 
 builder.Services.AddMassTransit(x =>
 {
-    // Configure the Entity Framework Outbox
+    // 1. Register the local DB updater consumer
+    x.AddConsumer<UpdateOrderStatusConsumer>();
+
+    x.AddSagaStateMachine<OrderSagaStateMachine, OrderSagaState>()
+        .EntityFrameworkRepository(r =>
+        {
+            r.ConcurrencyMode = ConcurrencyMode.Optimistic;
+            r.UsePostgres();
+            r.ExistingDbContext<OrderDbContext>();
+        });
+
+    // 3. Configure the Outbox
     x.AddEntityFrameworkOutbox<OrderDbContext>(o =>
     {
-        o.UsePostgres(); // Tell it we are using PostgreSQL
-        o.UseBusOutbox(); // Ensure messages sent from consumers also use the outbox
+        o.UsePostgres();
+        o.UseBusOutbox();
     });
-       
+
+    // 4. RabbitMQ Configuration
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(new Uri(builder.Configuration["RabbitMq:Host"]!));
+        cfg.UseMessageRetry(r => r.Interval(3, 5000));
 
-        // Tell RabbitMQ to use the outbox for publishing
-        cfg.UseMessageRetry(r => r.Interval(3, 5000)); // Retry 3 times if RabbitMQ is briefly unavailable
+        cfg.ConfigureEndpoints(context);
     });
 });
 
