@@ -38,4 +38,10 @@ public class OrderService : IOrderService
 
         return order.Id;
     }
+    public async Task<List<Order>> GetOrdersAsync()
+    {
+        return await _context.Orders
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
+    }
 }

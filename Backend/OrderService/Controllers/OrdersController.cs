@@ -21,4 +21,9 @@ public class OrdersController : ControllerBase
         var orderId = await _orderService.SubmitOrderAsync(request);
         return Ok(new { Message = "Order submitted and processing started!", OrderId = orderId });
     }
+    [HttpGet]
+    public async Task<IActionResult> GetOrders()
+    {
+        return Ok(await _orderService.GetOrdersAsync());
+    }
 }
