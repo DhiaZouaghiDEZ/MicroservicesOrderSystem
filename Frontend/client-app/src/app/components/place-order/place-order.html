@@ -1,0 +1,71 @@
+<div class="max-w-4xl mx-auto p-6">
+  <h1 class="text-3xl font-bold text-gray-900 mb-8">Place Order</h1>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Order Form -->
+    <div class="card">
+      <h2 class="text-xl font-semibold mb-4">Order Details</h2>
+      <form [formGroup]="orderForm" (ngSubmit)="onSubmit()" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Product Name</label>
+          <input type="text" formControlName="productName" class="input-field" placeholder="e.g., Laptop">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+          <input type="number" formControlName="quantity" class="input-field" placeholder="2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Amount ($)</label>
+          <input type="number" formControlName="amount" class="input-field" placeholder="500">
+          <p class="text-xs text-gray-500 mt-1">Amount >= 1000 will trigger payment failure (for testing)</p>
+        </div>
+        <button type="submit" class="btn-primary w-full" [disabled]="orderForm.invalid || isSubmitting()">
+          @if (isSubmitting()) {
+            Processing...
+          } @else {
+            Place Order
+          }
+        </button>
+      </form>
+
+      @if (orderResult()) {
+        <div class="mt-6 p-4 rounded-lg" [class]="orderResult()!.success ? 'bg-green-100 border border-green-400' : 'bg-red-100 border border-red-400'">
+          <p class="font-semibold" [class]="orderResult()!.success ? 'text-green-800' : 'text-red-800'">
+            @if (orderResult()!.success) {
+              ✅ Order Placed Successfully!
+            } @else {
+              ❌ Order Failed
+            }
+          </p>
+          <p class="text-sm mt-1" [class]="orderResult()!.success ? 'text-green-700' : 'text-red-700'">
+            Order ID: {{ orderResult()!.orderId }}
+          </p>
+          <p class="text-sm mt-2">Watch the Dashboard to see the Saga process your order in real-time!</p>
+        </div>
+      }
+    </div>
+
+    <!-- Available Inventory -->
+    <div class="card">
+      <h2 class="text-xl font-semibold mb-4">Available Products</h2>
+      <div class="space-y-3">
+        @for (item of inventory(); track item.id) {
+          <div class="p-3 bg-gray-50 rounded-lg flex justify-between items-center">
+            <div>
+              <p class="font-medium">{{ item.productName }}</p>
+              <p class="text-sm text-gray-600">Stock: {{ item.stockQuantity }}</p>
+            </div>
+            <button (click)="selectProduct(item)" class="text-blue-600 hover:text-blue-700 font-medium">
+              Select
+            </button>
+          </div>
+        }
+        @if (inventory().length === 0) {
+          <div class="text-center text-gray-500 py-8">
+            No products available. Add stock first!
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

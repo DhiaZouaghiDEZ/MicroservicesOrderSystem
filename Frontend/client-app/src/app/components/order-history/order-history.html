@@ -1,0 +1,41 @@
+<div class="max-w-7xl mx-auto p-6">
+  <h1 class="text-3xl font-bold text-gray-900 mb-8">Order History</h1>
+
+  <div class="card">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b-2 border-gray-200">
+            <th class="text-left py-3 px-4 font-semibold text-gray-700">Order ID</th>
+            <th class="text-left py-3 px-4 font-semibold text-gray-700">Product</th>
+            <th class="text-right py-3 px-4 font-semibold text-gray-700">Quantity</th>
+            <th class="text-right py-3 px-4 font-semibold text-gray-700">Amount</th>
+            <th class="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
+            <th class="text-right py-3 px-4 font-semibold text-gray-700">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of orders(); track order.id) {
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+              <td class="py-3 px-4 text-sm font-mono">{{ order.id | slice:0:8 }}...</td>
+              <td class="py-3 px-4 font-medium">{{ order.productName }}</td>
+              <td class="py-3 px-4 text-right">{{ order.quantity }}</td>
+              <td class="py-3 px-4 text-right">${{ order.amount }}</td>
+              <td class="py-3 px-4 text-center">
+                <span class="px-3 py-1 rounded-full text-sm font-medium {{ getStatusClass(order.status) }}">
+                  {{ order.status }}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-right text-sm text-gray-600">{{ order.createdAt | date:'short' }}</td>
+            </tr>
+          }
+          @if (orders().length === 0) {
+            <tr>
+              <td colspan="6" class="py-8 text-center text-gray-500">No orders yet</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
