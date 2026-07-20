@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 
 export interface Order {
   id: string;
+  productId: string;
   productName: string;
   quantity: number;
   amount: number;
@@ -13,9 +14,9 @@ export interface Order {
 }
 
 export interface CreateOrderRequest {
-  productName: string;
+  productId: string;
   quantity: number;
-  amount: number;
+  cardNumber: string;
 }
 
 @Injectable({ providedIn: 'root' })

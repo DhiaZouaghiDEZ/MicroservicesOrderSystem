@@ -7,16 +7,11 @@ namespace OrderService.Sagas;
 
 public class OrderSagaStateMachine : MassTransitStateMachine<OrderSagaState>
 {
-    // Define the states
-    public State PendingInventory { get; private set; } = null!;
-    public State PendingPayment { get; private set; } = null!;
-    public State Completed { get; private set; } = null!;
-    public State Failed { get; private set; } = null!;
-
-    // Define the events that trigger transitions
     public Event<OrderSubmittedEvent> OrderSubmitted { get; private set; } = null!;
     public Event<InventoryReservedEvent> InventoryReserved { get; private set; } = null!;
-    public Event<InventoryReservationFailedEvent> InventoryFailed { get; private set; } = null!;
+    public Event<InventoryReservationFailedEvent> InventoryReservationFailed { get; private set; } = null!;
+    public Event<InventoryConfirmedEvent> InventoryConfirmed { get; private set; } = null!;
+    public Event<InventoryReleasedEvent> InventoryReleased { get; private set; } = null!;
     public Event<PaymentProcessedEvent> PaymentProcessed { get; private set; } = null!;
     public Event<PaymentFailedEvent> PaymentFailed { get; private set; } = null!;
 
@@ -24,65 +19,78 @@ public class OrderSagaStateMachine : MassTransitStateMachine<OrderSagaState>
     {
         InstanceState(x => x.CurrentState);
 
-        // Correlate all events by OrderId
         Event(() => OrderSubmitted, x => x.CorrelateById(ctx => ctx.Message.OrderId));
         Event(() => InventoryReserved, x => x.CorrelateById(ctx => ctx.Message.OrderId));
-        Event(() => InventoryFailed, x => x.CorrelateById(ctx => ctx.Message.OrderId));
+        Event(() => InventoryReservationFailed, x => x.CorrelateById(ctx => ctx.Message.OrderId));
+        Event(() => InventoryConfirmed, x => x.CorrelateById(ctx => ctx.Message.OrderId));
+        Event(() => InventoryReleased, x => x.CorrelateById(ctx => ctx.Message.OrderId));
         Event(() => PaymentProcessed, x => x.CorrelateById(ctx => ctx.Message.OrderId));
         Event(() => PaymentFailed, x => x.CorrelateById(ctx => ctx.Message.OrderId));
 
-        // INITIAL STATE: Order submitted -> Reserve inventory
         Initially(
             When(OrderSubmitted)
-                .Then(ctx =>
+                .Then(context =>
                 {
-                    ctx.Saga.ProductName = ctx.Message.ProductName;
-                    ctx.Saga.Quantity = ctx.Message.Quantity;
-                    ctx.Saga.Amount = ctx.Message.Amount;
+                    context.Saga.ProductId = context.Message.ProductId;
+                    context.Saga.Quantity = context.Message.Quantity;
+                    context.Saga.Amount = context.Message.Amount;
+                    context.Saga.CardNumber = context.Message.CardNumber;
                 })
+                .Publish(context => new ReserveInventoryCommand(
+                    context.Saga.CorrelationId,
+                    context.Saga.ProductId,
+                    context.Saga.Quantity))
                 .TransitionTo(PendingInventory)
-                .Publish(ctx => new ReserveInventoryCommand(
-                    ctx.Saga.CorrelationId,
-                    ctx.Saga.ProductName,
-                    ctx.Saga.Quantity))
         );
 
-        // PENDING INVENTORY: Success -> Process payment
         During(PendingInventory,
             When(InventoryReserved)
-                .TransitionTo(PendingPayment)
-                .Publish(ctx => new ProcessPaymentCommand(
-                    ctx.Saga.CorrelationId,
-                    ctx.Saga.Amount,
-                    "4111111111111111")) // Fake card number
-        );
-
-        // PENDING INVENTORY: Failure -> Fail order
-        During(PendingInventory,
-            When(InventoryFailed)
-                .TransitionTo(Failed)
-                .Publish(ctx => new UpdateOrderStatusCommand(ctx.Saga.CorrelationId, "Failed"))
+                .Publish(context => new ProcessPaymentCommand(
+                    context.Saga.CorrelationId,
+                    context.Saga.Amount,
+                    context.Saga.CardNumber))
+                .TransitionTo(PendingPayment),
+            When(InventoryReservationFailed)
+                .Publish(context => new UpdateOrderStatusCommand(
+                    context.Saga.CorrelationId,
+                    $"Failed: {context.Message.Reason}"))
                 .Finalize()
         );
 
-        // PENDING PAYMENT: Success -> Complete order
         During(PendingPayment,
             When(PaymentProcessed)
-                .TransitionTo(Completed)
-                .Publish(ctx => new UpdateOrderStatusCommand(ctx.Saga.CorrelationId, "Completed"))
+                .Publish(context => new ConfirmInventoryCommand(
+                    context.Saga.CorrelationId,
+                    context.Saga.ProductId,
+                    context.Saga.Quantity))
+                .TransitionTo(ConfirmingInventory),
+            When(PaymentFailed)
+                .Publish(context => new ReleaseInventoryCommand(
+                    context.Saga.CorrelationId,
+                    context.Saga.ProductId,
+                    context.Saga.Quantity))
+                .TransitionTo(ReleasingInventory)
+        );
+
+        During(ConfirmingInventory,
+            When(InventoryConfirmed)
+                .Publish(context => new UpdateOrderStatusCommand(
+                    context.Saga.CorrelationId, "Completed"))
                 .Finalize()
         );
 
-        // PENDING PAYMENT: Failure -> Release inventory (COMPENSATING!)
-        During(PendingPayment,
-            When(PaymentFailed)
-                .TransitionTo(Failed)
-                .Publish(ctx => new ReleaseInventoryCommand(
-                    ctx.Saga.CorrelationId,
-                    ctx.Saga.ProductName,
-                    ctx.Saga.Quantity))
-                .Publish(ctx => new UpdateOrderStatusCommand(ctx.Saga.CorrelationId, "Failed"))
+        During(ReleasingInventory,
+            When(InventoryReleased)
+                .Publish(context => new UpdateOrderStatusCommand(
+                    context.Saga.CorrelationId, "Failed: Payment declined"))
                 .Finalize()
         );
+
+        SetCompletedWhenFinalized();
     }
+
+    public State PendingInventory { get; private set; } = null!;
+    public State PendingPayment { get; private set; } = null!;
+    public State ConfirmingInventory { get; private set; } = null!;
+    public State ReleasingInventory { get; private set; } = null!;
 }

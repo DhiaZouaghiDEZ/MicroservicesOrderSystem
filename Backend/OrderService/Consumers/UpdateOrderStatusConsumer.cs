@@ -21,6 +21,7 @@ public class UpdateOrderStatusConsumer : IConsumer<UpdateOrderStatusCommand>
         {
             order.Status = context.Message.NewStatus;
             await _context.SaveChangesAsync();
+            Console.WriteLine($"Order {context.Message.OrderId} status updated to: {context.Message.NewStatus}");
         }
     }
 }

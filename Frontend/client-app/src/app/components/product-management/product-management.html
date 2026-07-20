@@ -1,0 +1,81 @@
+<div class="max-w-7xl mx-auto p-6">
+  <h1 class="text-3xl font-bold text-gray-900 mb-8">Admin: Product Management</h1>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Add Product Form -->
+    <div class="card h-fit">
+      <h2 class="text-xl font-semibold mb-4">Add New Product</h2>
+      <form [formGroup]="productForm" (ngSubmit)="onCreateProduct()" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+          <input type="text" formControlName="productName" class="input-field" placeholder="e.g., Gaming Laptop">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+          <input type="number" formControlName="price" class="input-field" placeholder="1299.99" step="0.01">
+        </div>
+        <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+        <select formControlName="category" class="input-field">
+            <option value="General">General</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Gaming">Gaming</option>
+            <option value="Accessories">Accessories</option>
+        </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <textarea formControlName="description" class="input-field" rows="3" placeholder="High-performance..."></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+          <input type="url" formControlName="imageUrl" class="input-field" placeholder="https://...">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Initial Stock</label>
+          <input type="number" formControlName="stockQuantity" class="input-field" placeholder="10">
+        </div>
+        <button type="submit" class="btn-primary w-full" [disabled]="productForm.invalid">
+          Create Product
+        </button>
+        @if (successMessage()) {
+          <div class="p-3 bg-green-100 text-green-800 rounded-lg text-sm text-center">
+            {{ successMessage() }}
+          </div>
+        }
+        @if (errorMessage()) {
+            <div class="p-3 bg-red-100 text-red-800 rounded-lg text-sm text-center">
+                {{ errorMessage() }}
+            </div>
+        }
+      </form>
+    </div>
+
+    <!-- Products List -->
+    <div class="card lg:col-span-2">
+      <h2 class="text-xl font-semibold mb-4">Existing Products</h2>
+      <div class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+        @for (product of products(); track product.id) {
+          <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+            <img [src]="product.imageUrl" [alt]="product.productName" class="w-16 h-16 object-cover rounded">
+            <div class="flex-grow">
+              <h3 class="font-semibold text-gray-900">{{ product.productName }}</h3>
+              <p class="text-sm text-gray-600 line-clamp-1">{{ product.description }}</p>
+              <div class="flex gap-4 mt-1 text-sm">
+                <span class="text-blue-600 font-bold">${{ product.price }}</span>
+                <span class="text-gray-500">Stock: {{ product.stockQuantity }}</span>
+              </div>
+            </div>
+            <button (click)="onDeleteProduct(product.id)" 
+                    class="px-4 py-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors font-medium">
+              Delete
+            </button>
+          </div>
+        }
+        @if (products().length === 0) {
+          <div class="text-center py-8 text-gray-500">No products yet. Create your first product!</div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

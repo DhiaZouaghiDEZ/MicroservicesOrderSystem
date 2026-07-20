@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using MassTransit;
+﻿using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using OrderService.Models.Entities;
 using OrderService.Sagas;
 
@@ -10,17 +10,34 @@ public class OrderDbContext : DbContext
     public OrderDbContext(DbContextOptions<OrderDbContext> options) : base(options) { }
 
     public DbSet<Order> Orders { get; set; }
+    public DbSet<OrderSagaState> OrderSagaStates { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("order");
-    
-        modelBuilder.Entity<OrderSagaState>(builder =>
+
+        modelBuilder.Entity<Order>(entity =>
         {
-            builder.HasKey(x => x.CorrelationId);
-            builder.Property(x => x.CurrentState).HasMaxLength(64);
-            builder.Property(x => x.ProductName).HasMaxLength(256);
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Status).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Amount).HasPrecision(18, 2);
+
+            entity.Property(e => e.ProductId).IsRequired();
+
+            entity.HasIndex(e => e.ProductId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAt);
+        });
+
+        modelBuilder.Entity<OrderSagaState>(entity =>
+        {
+            entity.HasKey(e => e.CorrelationId);
+            entity.Property(e => e.CurrentState).HasMaxLength(100);
+
+            entity.Property(e => e.ProductId).IsRequired();
+            entity.Property(e => e.Amount).HasPrecision(18, 2);
+            entity.Property(e => e.CardNumber).HasMaxLength(20);
         });
 
         modelBuilder.AddInboxStateEntity();

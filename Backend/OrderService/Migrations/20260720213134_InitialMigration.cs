@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace OrderService.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -45,14 +45,33 @@ namespace OrderService.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
                     ProductName = table.Column<string>(type: "text", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<string>(type: "text", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Orders", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OrderSagaStates",
+                schema: "order",
+                columns: table => new
+                {
+                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CurrentState = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    CardNumber = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrderSagaStates", x => x.CorrelationId);
                 });
 
             migrationBuilder.CreateTable(
@@ -125,6 +144,24 @@ namespace OrderService.Migrations
                 column: "Delivered");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Orders_CreatedAt",
+                schema: "order",
+                table: "Orders",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Orders_ProductId",
+                schema: "order",
+                table: "Orders",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Orders_Status",
+                schema: "order",
+                table: "Orders",
+                column: "Status");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OutboxMessage_EnqueueTime",
                 schema: "order",
                 table: "OutboxMessage",
@@ -168,6 +205,10 @@ namespace OrderService.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Orders",
+                schema: "order");
+
+            migrationBuilder.DropTable(
+                name: "OrderSagaStates",
                 schema: "order");
 
             migrationBuilder.DropTable(

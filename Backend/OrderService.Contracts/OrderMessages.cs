@@ -1,7 +1,10 @@
 ﻿namespace OrderService.Contracts;
 
-// Events that start the workflow
-public record OrderSubmittedEvent(Guid OrderId, string ProductName, int Quantity, decimal Amount);
+public record OrderSubmittedEvent(
+    Guid OrderId,
+    Guid ProductId,
+    int Quantity,
+    decimal Amount,
+    string CardNumber);
 
-// Internal command to update local DB
 public record UpdateOrderStatusCommand(Guid OrderId, string NewStatus);

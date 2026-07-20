@@ -1,0 +1,53 @@
+<div class="max-w-7xl mx-auto p-6">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Product Catalog</h1>
+    <a routerLink="/admin/products" class="btn-secondary text-sm">Manage Products (Admin)</a>
+  </div>
+
+  @if (products().length === 0) {
+    <div class="text-center py-16 bg-white rounded-lg shadow">
+      <p class="text-gray-500 text-lg">No products available yet.</p>
+      <a routerLink="/admin/products" class="text-blue-600 hover:underline mt-2 inline-block">Add your first product</a>
+    </div>
+  }
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    @for (product of products(); track product.id) {
+      <div class="card flex flex-col hover:shadow-xl transition-shadow duration-300"
+           [class.opacity-60]="!product.isAvailable">
+        
+        <div class="relative">
+          <img [src]="product.imageUrl" [alt]="product.productName" 
+               class="w-full h-56 object-cover rounded-t-lg">
+          @if (!product.isAvailable) {
+            <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-t-lg">
+              <span class="bg-red-600 text-white px-4 py-2 rounded-full font-bold">Out of Stock</span>
+            </div>
+          }
+        </div>
+
+        <div class="p-5 flex flex-col flex-grow">
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="text-xl font-bold text-gray-900">{{ product.productName }}</h3>
+            <span class="text-lg font-bold text-blue-600">${{ product.price }}</span>
+          </div>
+          
+          <p class="text-sm text-gray-600 mb-4 flex-grow">{{ product.description }}</p>
+          
+          <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
+            <span class="text-sm font-medium" 
+                  [class]="product.isAvailable ? 'text-green-600' : 'text-red-600'">
+              {{ product.isAvailable ? product.availableQuantity + ' in stock' : 'Sold Out' }}
+            </span>
+            
+            <button (click)="buyNow(product)" 
+                    [disabled]="!product.isAvailable"
+                    class="btn-primary disabled:opacity-50 disabled:cursor-not-allowed">
+              Buy Now
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

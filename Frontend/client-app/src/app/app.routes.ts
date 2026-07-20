@@ -1,14 +1,16 @@
 import { Routes } from '@angular/router';
 import { Dashboard } from './components/dashboard/dashboard';
-import { InventoryManagement } from './components/inventory-management/inventory-management';
-import { PlaceOrder } from './components/place-order/place-order';
+import { ProductCatalog } from './components/product-catalog/product-catalog';
+import { ProductManagement } from './components/product-management/product-management';
+import { Checkout } from './components/checkout/checkout';
 import { OrderHistory } from './components/order-history/order-history';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  { path: '', redirectTo: '/products', pathMatch: 'full' },
   { path: 'dashboard', component: Dashboard },
-  { path: 'inventory', component: InventoryManagement },
-  { path: 'order', component: PlaceOrder },
-  { path: 'history', component: OrderHistory },
-  { path: '**', redirectTo: '/dashboard' },
+  { path: 'products', component: ProductCatalog },
+  { path: 'admin/products', component: ProductManagement },
+  { path: 'checkout', component: Checkout },
+  { path: 'order-history', component: OrderHistory },
+  { path: '**', redirectTo: '/products' },
 ];

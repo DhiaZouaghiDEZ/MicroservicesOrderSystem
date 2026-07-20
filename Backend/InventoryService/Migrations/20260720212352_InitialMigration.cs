@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace InventoryService.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -40,20 +40,6 @@ namespace InventoryService.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "InventoryItems",
-                schema: "inventory",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProductName = table.Column<string>(type: "text", nullable: false),
-                    StockQuantity = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_InventoryItems", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "OutboxState",
                 schema: "inventory",
                 columns: table => new
@@ -69,6 +55,24 @@ namespace InventoryService.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_OutboxState", x => x.OutboxId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Products",
+                schema: "inventory",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Price = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    ImageUrl = table.Column<string>(type: "text", nullable: false),
+                    Category = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Products", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -116,11 +120,42 @@ namespace InventoryService.Migrations
                         principalColumn: "OutboxId");
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Inventory",
+                schema: "inventory",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false),
+                    StockQuantity = table.Column<int>(type: "integer", nullable: false),
+                    ReservedQuantity = table.Column<int>(type: "integer", nullable: false),
+                    WarehouseLocation = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    LastUpdated = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Inventory", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Inventory_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalSchema: "inventory",
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_InboxState_Delivered",
                 schema: "inventory",
                 table: "InboxState",
                 column: "Delivered");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Inventory_ProductId",
+                schema: "inventory",
+                table: "Inventory",
+                column: "ProductId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutboxMessage_EnqueueTime",
@@ -165,11 +200,15 @@ namespace InventoryService.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "InventoryItems",
+                name: "Inventory",
                 schema: "inventory");
 
             migrationBuilder.DropTable(
                 name: "OutboxMessage",
+                schema: "inventory");
+
+            migrationBuilder.DropTable(
+                name: "Products",
                 schema: "inventory");
 
             migrationBuilder.DropTable(

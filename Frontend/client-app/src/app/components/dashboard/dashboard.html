@@ -2,40 +2,56 @@
   <h1 class="text-3xl font-bold text-gray-900 mb-8">Dashboard Overview</h1>
 
   <!-- Stats Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
     <div class="card border-l-4 border-blue-500">
       <p class="text-sm text-gray-600 font-medium">Total Products</p>
-      <p class="text-4xl font-bold text-gray-900 mt-2">{{ inventory().length }}</p>
+      <p class="text-4xl font-bold text-gray-900 mt-2">{{ totalProducts() }}</p>
     </div>
     <div class="card border-l-4 border-green-500">
       <p class="text-sm text-gray-600 font-medium">Total Orders</p>
-      <p class="text-4xl font-bold text-gray-900 mt-2">{{ orders().length }}</p>
+      <p class="text-4xl font-bold text-gray-900 mt-2">{{ totalOrders() }}</p>
     </div>
     <div class="card border-l-4 border-purple-500">
       <p class="text-sm text-gray-600 font-medium">Completed Orders</p>
       <p class="text-4xl font-bold text-gray-900 mt-2">{{ completedOrders() }}</p>
     </div>
+    <div class="card border-l-4 border-yellow-500">
+      <p class="text-sm text-gray-600 font-medium">Total Revenue</p>
+      <p class="text-4xl font-bold text-gray-900 mt-2">${{ totalRevenue() | number:'1.2-2' }}</p>
+    </div>
   </div>
 
-  <!-- Recent Activity with @for (new control flow) -->
+  <!-- Recent Activity -->
   <div class="card">
     <h2 class="text-xl font-semibold mb-4 text-gray-800">Recent Orders (Live Saga Updates)</h2>
     <div class="space-y-3">
       @for (order of orders().slice(0, 5); track order.id) {
-        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
-          <div>
-            <p class="font-semibold text-gray-900">{{ order.productName }}</p>
-            <p class="text-sm text-gray-600">Qty: {{ order.quantity }} | Amount: ${{ order.amount }}</p>
+        <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+          <!-- Product Image -->
+          <img [src]="getProductImage(order.productId)" 
+               [alt]="getProductName(order.productId)"
+               class="w-16 h-16 object-cover rounded">
+          
+          <!-- Order Details -->
+          <div class="flex-grow">
+            <p class="font-semibold text-gray-900">{{ getProductName(order.productId) }}</p>
+            <p class="text-sm text-gray-600">
+              Qty: {{ order.quantity }} | Amount: ${{ order.amount | number:'1.2-2' }}
+            </p>
+            <p class="text-xs text-gray-500 mt-1">
+              Order ID: {{ order.id | slice:0:8 }}... | {{ order.createdAt | date:'short' }}
+            </p>
           </div>
-          @let statusClass = getStatusClass(order.status);
-          <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide {{ statusClass }}">
+          
+          <!-- Status Badge -->
+          <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide {{ getStatusClass(order.status) }}">
             {{ order.status }}
           </span>
         </div>
       }
       @if (orders().length === 0) {
         <div class="text-center py-8 text-gray-500">
-          No orders yet. Go to "Place Order" to start the Saga!
+          No orders yet. Go to "Shop" to place your first order!
         </div>
       }
     </div>

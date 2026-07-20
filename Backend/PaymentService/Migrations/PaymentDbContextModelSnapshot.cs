@@ -197,6 +197,36 @@ namespace PaymentService.Migrations
                     b.ToTable("OutboxState", "payment");
                 });
 
+            modelBuilder.Entity("PaymentService.Models.Entities.CreditCard", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("CVV")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CardHolderName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CardNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExpiryDate")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CreditCards", "payment");
+                });
+
             modelBuilder.Entity("PaymentService.Models.Entities.PaymentRecord", b =>
                 {
                     b.Property<Guid>("Id")

@@ -7,13 +7,30 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace PaymentService.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
                 name: "payment");
+
+            migrationBuilder.CreateTable(
+                name: "CreditCards",
+                schema: "payment",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CardNumber = table.Column<string>(type: "text", nullable: false),
+                    CardHolderName = table.Column<string>(type: "text", nullable: false),
+                    ExpiryDate = table.Column<string>(type: "text", nullable: false),
+                    CVV = table.Column<string>(type: "text", nullable: false),
+                    Balance = table.Column<decimal>(type: "numeric", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CreditCards", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "InboxState",
@@ -166,6 +183,10 @@ namespace PaymentService.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "CreditCards",
+                schema: "payment");
+
             migrationBuilder.DropTable(
                 name: "OutboxMessage",
                 schema: "payment");

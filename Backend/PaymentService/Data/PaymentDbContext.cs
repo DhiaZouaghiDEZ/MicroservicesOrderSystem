@@ -9,6 +9,7 @@ public class PaymentDbContext : DbContext
     public PaymentDbContext(DbContextOptions<PaymentDbContext> options) : base(options) { }
 
     public DbSet<PaymentRecord> PaymentRecords { get; set; }
+    public DbSet<CreditCard> CreditCards { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -18,12 +18,21 @@ public class OrdersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
     {
-        var orderId = await _orderService.SubmitOrderAsync(request);
-        return Ok(new { Message = "Order submitted and processing started!", OrderId = orderId });
+        try
+        {
+            var orderId = await _orderService.SubmitOrderAsync(request);
+            return Ok(new { Message = "Order submitted and processing started!", OrderId = orderId });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Message = ex.Message });
+        }
     }
+
     [HttpGet]
     public async Task<IActionResult> GetOrders()
     {
-        return Ok(await _orderService.GetOrdersAsync());
+        var orders = await _orderService.GetAllOrdersAsync();
+        return Ok(orders);
     }
 }

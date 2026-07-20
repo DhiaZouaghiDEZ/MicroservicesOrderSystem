@@ -1,3 +1,8 @@
 ﻿namespace OrderService.Models.DTOs;
 
-public record CreateOrderRequest(string ProductName, int Quantity, decimal Amount);
+public class CreateOrderRequest
+{
+    public Guid ProductId { get; set; }
+    public int Quantity { get; set; }
+    public string CardNumber { get; set; } = string.Empty;
+}

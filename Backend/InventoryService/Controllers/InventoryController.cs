@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using InventoryService.Data;
-using InventoryService.Models.Entities;
+using InventoryService.Models.DTOs;
+using InventoryService.Services;
 
 namespace InventoryService.Controllers;
 
@@ -9,40 +8,87 @@ namespace InventoryService.Controllers;
 [Route("api/[controller]")]
 public class InventoryController : ControllerBase
 {
-    private readonly InventoryDbContext _context;
+    private readonly IInventoryService _inventoryService;
 
-    public InventoryController(InventoryDbContext context)
+    public InventoryController(IInventoryService inventoryService)
     {
-        _context = context;
+        _inventoryService = inventoryService;
     }
 
-    // Endpoint to add stock manually
-    [HttpPost("add")]
-    public async Task<IActionResult> AddStock([FromBody] AddStockRequest request)
+    [HttpGet("products")]
+    public async Task<IActionResult> GetProducts()
     {
-        var item = await _context.InventoryItems.FirstOrDefaultAsync(i => i.ProductName == request.ProductName);
+        var products = await _inventoryService.GetAllProductsAsync();
 
-        if (item == null)
+        var result = products.Select(p => new
         {
-            item = new InventoryItem { ProductName = request.ProductName, StockQuantity = request.Quantity };
-            _context.InventoryItems.Add(item);
-        }
-        else
-        {
-            item.StockQuantity += request.Quantity;
-        }
+            p.Id,
+            p.ProductName,
+            p.Price,
+            p.Description,
+            p.ImageUrl,
+            p.Category,
+            StockQuantity = p.Inventory?.StockQuantity ?? 0,
+            ReservedQuantity = p.Inventory?.ReservedQuantity ?? 0,
+            AvailableQuantity = p.Inventory?.AvailableQuantity ?? 0,
+            IsAvailable = (p.Inventory?.AvailableQuantity ?? 0) > 0
+        });
 
-        await _context.SaveChangesAsync();
-        return Ok(new { Message = "Stock updated", item });
+        return Ok(result);
     }
 
-    // Endpoint to view all stock
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
+    [HttpGet("products/{id}")]
+    public async Task<IActionResult> GetProduct(Guid id)
     {
-        var items = await _context.InventoryItems.ToListAsync();
-        return Ok(items);
+        var product = await _inventoryService.GetProductByIdAsync(id);
+        if (product == null)
+            return NotFound(new { Message = "Product not found" });
+
+        return Ok(product);
+    }
+
+    [HttpPost("products")]
+    public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
+    {
+        try
+        {
+            var product = await _inventoryService.CreateProductAsync(request);
+            return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { Message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Message = "An error occurred while creating the product." });
+        }
+    }
+
+    [HttpPost("products/{id}/restock")]
+    public async Task<IActionResult> Restock(Guid id, [FromBody] RestockRequest request)
+    {
+        var inventory = await _inventoryService.GetInventoryByProductIdAsync(id);
+        if (inventory == null)
+            return NotFound(new { Message = "Product not found" });
+
+        await _inventoryService.RestockAsync(id, request.Quantity);
+
+        return Ok(new
+        {
+            Message = "Stock added successfully",
+            NewStockQuantity = inventory.StockQuantity + request.Quantity
+        });
+    }
+
+    [HttpDelete("products/{id}")]
+    public async Task<IActionResult> DeleteProduct(Guid id)
+    {
+        var product = await _inventoryService.GetProductByIdAsync(id);
+        if (product == null)
+            return NotFound(new { Message = "Product not found" });
+
+        await _inventoryService.DeleteProductAsync(id);
+        return Ok(new { Message = "Product deleted successfully" });
     }
 }
-
-public record AddStockRequest(string ProductName, int Quantity);

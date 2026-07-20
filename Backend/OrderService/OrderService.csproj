@@ -25,4 +25,9 @@
     <ProjectReference Include="..\PaymentService.Contracts\PaymentService.Contracts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+    <Folder Include="Models\Entities\" />
+  </ItemGroup>
+
 </Project>

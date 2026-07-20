@@ -16,7 +16,7 @@ builder.Configuration
     .AddEnvironmentVariables();
 
 builder.Services.AddControllers();
-
+builder.Services.AddHttpClient();
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<OrderDbContext>(options =>

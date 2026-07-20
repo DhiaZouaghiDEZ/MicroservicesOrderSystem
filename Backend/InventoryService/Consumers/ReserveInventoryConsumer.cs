@@ -8,42 +8,38 @@ namespace InventoryService.Consumers;
 public class ReserveInventoryConsumer : IConsumer<ReserveInventoryCommand>
 {
     private readonly InventoryDbContext _context;
-    private readonly IPublishEndpoint _publishEndpoint;
-    private readonly ILogger<ReserveInventoryConsumer> _logger;
 
-    public ReserveInventoryConsumer(
-        InventoryDbContext context,
-        IPublishEndpoint publishEndpoint,
-        ILogger<ReserveInventoryConsumer> logger)
+    public ReserveInventoryConsumer(InventoryDbContext context)
     {
         _context = context;
-        _publishEndpoint = publishEndpoint;
-        _logger = logger;
     }
 
     public async Task Consume(ConsumeContext<ReserveInventoryCommand> context)
     {
-        _logger.LogInformation("ReserveInventory: {OrderId} | {ProductName} x {Quantity}",
-            context.Message.OrderId, context.Message.ProductName, context.Message.Quantity);
+        var inventory = await _context.Inventory
+            .FirstOrDefaultAsync(i => i.ProductId == context.Message.ProductId);
 
-        var item = await _context.InventoryItems
-            .FirstOrDefaultAsync(i => i.ProductName == context.Message.ProductName);
-
-        if (item == null || item.StockQuantity < context.Message.Quantity)
+        if (inventory == null)
         {
-            _logger.LogWarning("Failed: Insufficient stock for {ProductName}", context.Message.ProductName);
-
-            await _publishEndpoint.Publish(new InventoryReservationFailedEvent(
-                context.Message.OrderId,
-                item == null ? "Product not found" : "Insufficient stock"));
+            await context.Publish(new InventoryReservationFailedEvent(
+                context.Message.OrderId, "Product not found in inventory"));
             return;
         }
 
-        item.StockQuantity -= context.Message.Quantity;
+        if (inventory.AvailableQuantity < context.Message.Quantity)
+        {
+            await context.Publish(new InventoryReservationFailedEvent(
+                context.Message.OrderId,
+                $"Insufficient stock. Available: {inventory.AvailableQuantity}, Requested: {context.Message.Quantity}"));
+            return;
+        }
+
+        inventory.ReservedQuantity += context.Message.Quantity;
+        inventory.LastUpdated = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Stock reserved for {ProductName}", context.Message.ProductName);
+        Console.WriteLine($"🔒 RESERVED {context.Message.Quantity} units of Product {context.Message.ProductId} for Order {context.Message.OrderId}");
 
-        await _publishEndpoint.Publish(new InventoryReservedEvent(context.Message.OrderId));
+        await context.Publish(new InventoryReservedEvent(context.Message.OrderId));
     }
 }

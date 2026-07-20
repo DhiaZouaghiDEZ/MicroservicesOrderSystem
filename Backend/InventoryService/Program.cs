@@ -1,7 +1,8 @@
-using MassTransit;
-using Microsoft.EntityFrameworkCore;
 using InventoryService.Consumers;
 using InventoryService.Data;
+using InventoryService.Services;
+using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,13 +16,14 @@ builder.Configuration
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
-
+builder.Services.AddScoped<IInventoryService, InventoryService.Services.InventoryService>();
 builder.Services.AddDbContext<InventoryDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<ReserveInventoryConsumer>();
+    x.AddConsumer<ConfirmInventoryConsumer>();
     x.AddConsumer<ReleaseInventoryConsumer>();
 
     x.AddEntityFrameworkOutbox<InventoryDbContext>(o =>

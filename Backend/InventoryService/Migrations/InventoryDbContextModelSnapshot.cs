@@ -23,22 +23,70 @@ namespace InventoryService.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("InventoryService.Models.Entities.InventoryItem", b =>
+            modelBuilder.Entity("InventoryService.Models.Entities.Inventory", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<DateTime>("LastUpdated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ReservedQuantity")
+                        .HasColumnType("integer");
 
                     b.Property<int>("StockQuantity")
                         .HasColumnType("integer");
 
+                    b.Property<string>("WarehouseLocation")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.HasKey("Id");
 
-                    b.ToTable("InventoryItems", "inventory");
+                    b.HasIndex("ProductId")
+                        .IsUnique();
+
+                    b.ToTable("Inventory", "inventory");
+                });
+
+            modelBuilder.Entity("InventoryService.Models.Entities.Product", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Products", "inventory");
                 });
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.InboxState", b =>
@@ -215,6 +263,17 @@ namespace InventoryService.Migrations
                     b.ToTable("OutboxState", "inventory");
                 });
 
+            modelBuilder.Entity("InventoryService.Models.Entities.Inventory", b =>
+                {
+                    b.HasOne("InventoryService.Models.Entities.Product", "Product")
+                        .WithOne("Inventory")
+                        .HasForeignKey("InventoryService.Models.Entities.Inventory", "ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.OutboxMessage", b =>
                 {
                     b.HasOne("MassTransit.EntityFrameworkCoreIntegration.OutboxState", null)
@@ -225,6 +284,11 @@ namespace InventoryService.Migrations
                         .WithMany()
                         .HasForeignKey("InboxMessageId", "InboxConsumerId")
                         .HasPrincipalKey("MessageId", "ConsumerId");
+                });
+
+            modelBuilder.Entity("InventoryService.Models.Entities.Product", b =>
+                {
+                    b.Navigation("Inventory");
                 });
 #pragma warning restore 612, 618
         }

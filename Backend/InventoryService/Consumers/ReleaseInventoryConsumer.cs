@@ -8,28 +8,26 @@ namespace InventoryService.Consumers;
 public class ReleaseInventoryConsumer : IConsumer<ReleaseInventoryCommand>
 {
     private readonly InventoryDbContext _context;
-    private readonly ILogger<ReleaseInventoryConsumer> _logger;
 
-    public ReleaseInventoryConsumer(InventoryDbContext context, ILogger<ReleaseInventoryConsumer> logger)
+    public ReleaseInventoryConsumer(InventoryDbContext context)
     {
         _context = context;
-        _logger = logger;
     }
 
     public async Task Consume(ConsumeContext<ReleaseInventoryCommand> context)
     {
-        _logger.LogInformation("COMPENSATING: ReleaseInventory | {OrderId} | {ProductName} x {Quantity}",
-            context.Message.OrderId, context.Message.ProductName, context.Message.Quantity);
+        var inventory = await _context.Inventory
+            .FirstOrDefaultAsync(i => i.ProductId == context.Message.ProductId);
 
-        var item = await _context.InventoryItems
-            .FirstOrDefaultAsync(i => i.ProductName == context.Message.ProductName);
-
-        if (item != null)
+        if (inventory != null)
         {
-            item.StockQuantity += context.Message.Quantity;
+            inventory.ReservedQuantity -= context.Message.Quantity;
+            inventory.LastUpdated = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Inventory released. Stock restored to {Stock}", item.StockQuantity);
+            Console.WriteLine($"RELEASED reservation of {context.Message.Quantity} units for Order {context.Message.OrderId}");
         }
+
+        await context.Publish(new InventoryReleasedEvent(context.Message.OrderId));
     }
 }
