@@ -46,6 +46,20 @@ public class InventoryController : ControllerBase
 
         return Ok(product);
     }
+    [HttpGet("products/{id}/basic")]
+    public async Task<IActionResult> GetProductBasic(Guid id)
+    {
+        var product = await _inventoryService.GetProductByIdAsync(id);
+        if (product == null)
+            return NotFound(new { Message = "Product not found" });
+
+        return Ok(new
+        {
+            product.Id,
+            product.ProductName,
+            product.Price
+        });
+    }
 
     [HttpPost("products")]
     public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)

@@ -31,7 +31,7 @@ public class OrderService : IOrderService
         var client = _httpClientFactory.CreateClient();
         var inventoryServiceUrl = _configuration["InventoryService:Url"] ?? "https://localhost:44392";
 
-        var response = await client.GetAsync($"{inventoryServiceUrl}/api/inventory/products/{request.ProductId}");
+        var response = await client.GetAsync($"{inventoryServiceUrl}/api/inventory/products/{request.ProductId}/basic");
 
         if (!response.IsSuccessStatusCode)
         {
