@@ -1,11 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProductService, Product, CreateProductRequest } from '../../services/product.service';
 
 @Component({
   selector: 'app-product-management',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, DecimalPipe],
   templateUrl: './product-management.html',
 })
 export class ProductManagement {
@@ -15,13 +16,18 @@ export class ProductManagement {
   products = signal<Product[]>([]);
   successMessage = signal('');
   errorMessage = signal('');
+  restockProductId = signal<string | null>(null);
+  restockQuantity = signal(0);
 
   productForm = this.fb.group({
     productName: ['', Validators.required],
     price: [0, [Validators.required, Validators.min(0.01)]],
-    category: ['General', Validators.required], // 🔥 Added
+    category: ['General', Validators.required],
     description: ['', Validators.required],
-    imageUrl: ['', [Validators.required]],
+    imageUrl: [
+      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400',
+      [Validators.required],
+    ],
     stockQuantity: [0, [Validators.required, Validators.min(0)]],
   });
 
@@ -63,11 +69,57 @@ export class ProductManagement {
 
   onDeleteProduct(productId: string) {
     if (confirm('Are you sure you want to delete this product? This cannot be undone.')) {
-      this.productService.deleteProduct(productId).subscribe(() => {
-        this.successMessage.set('Product deleted successfully!');
-        this.loadProducts();
-        setTimeout(() => this.successMessage.set(''), 3000);
+      this.productService.deleteProduct(productId).subscribe({
+        next: () => {
+          this.successMessage.set('Product deleted successfully!');
+          this.errorMessage.set('');
+          this.loadProducts();
+          setTimeout(() => this.successMessage.set(''), 3000);
+        },
+        error: () => {
+          this.errorMessage.set('Failed to delete product. Please try again.');
+          this.successMessage.set('');
+          setTimeout(() => this.errorMessage.set(''), 5000);
+        },
       });
+    }
+  }
+
+  showRestockModal(productId: string) {
+    this.restockProductId.set(productId);
+    this.restockQuantity.set(10);
+  }
+
+  hideRestockModal() {
+    this.restockProductId.set(null);
+    this.restockQuantity.set(0);
+  }
+
+  onRestock() {
+    const productId = this.restockProductId();
+    const quantity = this.restockQuantity();
+
+    if (productId && quantity > 0) {
+      this.productService.restockProduct(productId, quantity).subscribe({
+        next: () => {
+          this.successMessage.set(`Successfully restocked ${quantity} units!`);
+          this.errorMessage.set('');
+          this.hideRestockModal();
+          this.loadProducts();
+          setTimeout(() => this.successMessage.set(''), 3000);
+        },
+        error: () => {
+          this.errorMessage.set('Failed to restock product. Please try again.');
+          this.successMessage.set('');
+          setTimeout(() => this.errorMessage.set(''), 5000);
+        },
+      });
+    }
+  }
+
+  updateRestockQuantity(value: number) {
+    if (value >= 1) {
+      this.restockQuantity.set(value);
     }
   }
 }

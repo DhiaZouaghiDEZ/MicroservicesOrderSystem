@@ -1,11 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
-import { DatePipe, SlicePipe } from '@angular/common';
+import { DatePipe, SlicePipe, DecimalPipe } from '@angular/common';
 import { OrderService } from '../../services/order.service';
 
 @Component({
   selector: 'app-order-history',
   standalone: true,
-  imports: [DatePipe, SlicePipe],
+  imports: [DatePipe, SlicePipe, DecimalPipe],
   templateUrl: './order-history.html',
 })
 export class OrderHistory {

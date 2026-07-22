@@ -1,13 +1,15 @@
 <div class="max-w-7xl mx-auto p-6">
   <div class="flex justify-between items-center mb-8">
     <h1 class="text-3xl font-bold text-gray-900">Product Catalog</h1>
-    <a routerLink="/admin/products" class="btn-secondary text-sm">Manage Products (Admin)</a>
+    <button (click)="goToAdmin()" class="btn-secondary text-sm">Manage Products (Admin)</button>
   </div>
 
   @if (products().length === 0) {
     <div class="text-center py-16 bg-white rounded-lg shadow">
       <p class="text-gray-500 text-lg">No products available yet.</p>
-      <a routerLink="/admin/products" class="text-blue-600 hover:underline mt-2 inline-block">Add your first product</a>
+      <button (click)="goToAdmin()" class="text-blue-600 hover:underline mt-2 inline-block">
+        Add your first product
+      </button>
     </div>
   }
 
@@ -29,7 +31,7 @@
         <div class="p-5 flex flex-col flex-grow">
           <div class="flex justify-between items-start mb-2">
             <h3 class="text-xl font-bold text-gray-900">{{ product.productName }}</h3>
-            <span class="text-lg font-bold text-blue-600">${{ product.price }}</span>
+            <span class="text-lg font-bold text-blue-600">{{ product.price | number:'1.2-2' }}€</span>
           </div>
           
           <p class="text-sm text-gray-600 mb-4 flex-grow">{{ product.description }}</p>

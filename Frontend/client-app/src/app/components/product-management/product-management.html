@@ -11,17 +11,17 @@
           <input type="text" formControlName="productName" class="input-field" placeholder="e.g., Gaming Laptop">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Price (€)</label>
           <input type="number" formControlName="price" class="input-field" placeholder="1299.99" step="0.01">
         </div>
         <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-        <select formControlName="category" class="input-field">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <select formControlName="category" class="input-field">
             <option value="General">General</option>
             <option value="Electronics">Electronics</option>
             <option value="Gaming">Gaming</option>
             <option value="Accessories">Accessories</option>
-        </select>
+          </select>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -44,9 +44,9 @@
           </div>
         }
         @if (errorMessage()) {
-            <div class="p-3 bg-red-100 text-red-800 rounded-lg text-sm text-center">
-                {{ errorMessage() }}
-            </div>
+          <div class="p-3 bg-red-100 text-red-800 rounded-lg text-sm text-center">
+            {{ errorMessage() }}
+          </div>
         }
       </form>
     </div>
@@ -62,14 +62,21 @@
               <h3 class="font-semibold text-gray-900">{{ product.productName }}</h3>
               <p class="text-sm text-gray-600 line-clamp-1">{{ product.description }}</p>
               <div class="flex gap-4 mt-1 text-sm">
-                <span class="text-blue-600 font-bold">${{ product.price }}</span>
+                <span class="text-blue-600 font-bold">{{ product.price | number:'1.2-2' }}€</span>
                 <span class="text-gray-500">Stock: {{ product.stockQuantity }}</span>
+                <span class="text-gray-500">Available: {{ product.availableQuantity }}</span>
               </div>
             </div>
-            <button (click)="onDeleteProduct(product.id)" 
-                    class="px-4 py-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors font-medium">
-              Delete
-            </button>
+            <div class="flex gap-2">
+              <button (click)="showRestockModal(product.id)" 
+                      class="px-3 py-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors font-medium text-sm">
+                Restock
+              </button>
+              <button (click)="onDeleteProduct(product.id)" 
+                      class="px-3 py-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors font-medium text-sm">
+                Delete
+              </button>
+            </div>
           </div>
         }
         @if (products().length === 0) {
@@ -79,3 +86,34 @@
     </div>
   </div>
 </div>
+
+<!-- Restock Modal -->
+@if (restockProductId()) {
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 class="text-xl font-semibold mb-4">Restock Product</h3>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Quantity to Add</label>
+          <div class="flex items-center gap-3">
+            <button (click)="updateRestockQuantity(restockQuantity() - 1)" 
+                    class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 font-medium">-</button>
+            <input type="number" [value]="restockQuantity()" 
+                   (input)="restockQuantity.set(+$any($event.target).value)"
+                   class="input-field text-center text-lg font-semibold" min="1">
+            <button (click)="updateRestockQuantity(restockQuantity() + 1)" 
+                    class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 font-medium">+</button>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button (click)="onRestock()" class="btn-primary flex-grow">
+            Confirm Restock
+          </button>
+          <button (click)="hideRestockModal()" class="btn-secondary flex-grow">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

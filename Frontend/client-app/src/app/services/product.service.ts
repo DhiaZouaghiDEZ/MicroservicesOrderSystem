@@ -38,6 +38,10 @@ export class ProductService {
     return this.http.post<Product>(`${this.apiUrl}/inventory/products`, request);
   }
 
+  restockProduct(productId: string, quantity: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/inventory/products/${productId}/restock`, { quantity });
+  }
+
   deleteProduct(productId: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/inventory/products/${productId}`);
   }

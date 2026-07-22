@@ -1,11 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { DecimalPipe } from '@angular/common';
 import { ProductService, Product } from '../../services/product.service';
 
 @Component({
   selector: 'app-product-catalog',
   standalone: true,
   templateUrl: './product-catalog.html',
+  imports: [DecimalPipe],
 })
 export class ProductCatalog {
   private productService = inject(ProductService);
@@ -27,5 +29,9 @@ export class ProductCatalog {
         price: product.price,
       },
     });
+  }
+
+  goToAdmin() {
+    this.router.navigate(['/admin/products']);
   }
 }
