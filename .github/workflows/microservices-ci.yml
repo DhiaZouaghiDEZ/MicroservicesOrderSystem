@@ -1,0 +1,78 @@
+name: Microservices CI/CD Pipeline
+
+on:
+    push:
+        branches: ["main"]
+    pull_request:
+        branches: ["main"]
+
+env:
+    REGISTRY: ghcr.io
+    REPO_NAME: ${{ github.repository }}
+
+jobs:
+    # Phase 1: Build and Test the .NET Code
+    build-and-test:
+        name: Build & Test .NET Services
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: "10.0.x"
+
+            - name: Restore Dependencies
+              run: dotnet restore Backend/
+
+            - name: Build Solution
+              run: dotnet build Backend/ --no-restore --configuration Release
+
+            - name: Run Tests
+              run: dotnet test Backend/ --no-build --configuration Release --verbosity normal
+
+    # Phase 2: Build Docker Images and Push to GHCR
+    build-and-push-docker:
+        name: Build & Push Docker Images
+        needs: build-and-test # Only runs if Phase 1 succeeds
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write # Required to push to GHCR
+
+        # We use a matrix to loop through all 4 services automatically
+        strategy:
+            matrix:
+                service:
+                    [ApiGateway, OrderService, InventoryService, PaymentService]
+
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Log in to GitHub Container Registry
+              uses: docker/login-action@v3
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Extract Docker Metadata
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.REGISTRY }}/${{ env.REPO_NAME }}/${{ matrix.service }}
+                  tags: |
+                      type=sha,format=long  # Tags image with the exact Git commit hash
+                      type=raw,value=latest # Also tags as 'latest'
+
+            - name: Build and Push Docker Image
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./Backend
+                  file: ./Backend/${{ matrix.service }}/Dockerfile
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
