@@ -1,0 +1,82 @@
+
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ApiGateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    networks:
+      - microservices-net
+
+  order-service:
+    build:
+      context: .
+      dockerfile: OrderService/Dockerfile
+    container_name: order-service
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=${ORDER_DB_CONNECTION}
+      - RabbitMq__ConnectionString=${RABBITMQ_CONNECTION_STRING}
+      - InventoryService__Url=http://inventory-service:8080
+    networks:
+      - microservices-net
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: InventoryService/Dockerfile
+    container_name: inventory-service
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=${INVENTORY_DB_CONNECTION}
+      - RabbitMq__ConnectionString=${RABBITMQ_CONNECTION_STRING}
+    networks:
+      - microservices-net
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: PaymentService/Dockerfile
+    container_name: payment-service
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=${PAYMENT_DB_CONNECTION}
+      - RabbitMq__ConnectionString=${RABBITMQ_CONNECTION_STRING}
+    networks:
+      - microservices-net
+
+  # user-service:
+  #   build:
+  #     context: .
+  #     dockerfile: UserService/Dockerfile
+  #   container_name: user-service
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - ASPNETCORE_URLS=http://+:8080
+  #     - ConnectionStrings__DefaultConnection=${USER_DB_CONNECTION}  # FIXED
+  #     - RabbitMq__ConnectionString=${RABBITMQ_CONNECTION_STRING}
+  #     - Jwt__SecretKey=${JWT_SECRET}
+  #     - Jwt__Issuer=${JWT_ISSUER}
+  #     - Jwt__Audience=${JWT_AUDIENCE}
+  #   networks:
+  #     - microservices-net
+
+networks:
+  microservices-net:
+    driver: bridge

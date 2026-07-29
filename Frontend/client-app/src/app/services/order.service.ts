@@ -22,7 +22,7 @@ export interface CreateOrderRequest {
 @Injectable({ providedIn: 'root' })
 export class OrderService {
   private http = inject(HttpClient);
-  private apiUrl = environment.apiUrl;
+  private apiUrl = `${environment.apiUrl}/api`;
 
   createOrder(request: CreateOrderRequest): Observable<any> {
     return this.http.post(`${this.apiUrl}/orders`, request);
