@@ -14,8 +14,9 @@ spec:
     spec:
       containers:
       - name: payment-service
-        image: payment-service:v1
-        imagePullPolicy: IfNotPresent
+        # 1. UPDATE THIS to your exact GHCR URL
+        image: ghcr.io/dhiazouaghidez/microservicesordersystem/paymentservice:sha-3839c4b679e02c8d0aa5ac04995fc92a991f7af4
+        imagePullPolicy: Always # Forces K8s to check GHCR for new images
         ports:
         - containerPort: 8080
         envFrom:
@@ -27,11 +28,21 @@ spec:
             secretKeyRef:
               name: app-secrets
               key: PAYMENT_DB_CONNECTION
-        - name: RabbitMq__ConnectionString
+        - name: RabbitMq__Host
           valueFrom:
             secretKeyRef:
               name: app-secrets
               key: RabbitMq__ConnectionString
+        # .NET 10 JIT Bypasses to prevent 139 Segfaults in Minikube
+        - name: DOTNET_TieredPGO
+          value: "0"
+        - name: DOTNET_ReadyToRun
+          value: "0"
+        - name: DOTNET_SYSTEM_GLOBALIZATION_INVARIANT
+          value: "1"
+      # 2. ADD THIS BLOCK to authenticate with GHCR
+      imagePullSecrets:
+      - name: ghcr-secret
 ---
 apiVersion: v1
 kind: Service

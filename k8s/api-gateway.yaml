@@ -14,15 +14,22 @@ spec:
     spec:
       containers:
       - name: api-gateway
-        image: api-gateway:v1
-        imagePullPolicy: IfNotPresent
+        image: ghcr.io/dhiazouaghidez/microservicesordersystem/apigateway:sha-3839c4b679e02c8d0aa5ac04995fc92a991f7af4
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         envFrom:
         - configMapRef:
             name: app-config
-        # YARP needs to know where the backend services are. 
-        # We will update your appsettings.json to use K8s DNS names.
+        env: 
+        - name: DOTNET_TieredPGO
+          value: "0"
+        - name: DOTNET_ReadyToRun
+          value: "0"
+        - name: DOTNET_SYSTEM_GLOBALIZATION_INVARIANT
+          value: "1"
+      imagePullSecrets:
+      - name: ghcr-secret
 ---
 apiVersion: v1
 kind: Service
